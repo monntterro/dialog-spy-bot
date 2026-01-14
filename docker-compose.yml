@@ -1,0 +1,7 @@
+services:
+  spy-bot:
+    build: .
+    container_name: spy-bot
+    restart: no
+    env_file:
+      - .env
