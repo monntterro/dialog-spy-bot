@@ -46,14 +46,48 @@ func handleUpdate(ctx context.Context, b *bot.Bot, update *models.Update, store 
 		chatTitle := getChatTitle(edited.Chat)
 		userName := getUserName(edited.From)
 
-		notification := fmt.Sprintf(
-			"✏️ <b>%s</b> | %s\n"+
-				"━━━━━━━━━━━━━━━\n"+
-				"%s",
-			userName,
-			chatTitle,
-			escapeHTML(edited.Text),
+		// Получаем оригинальное сообщение
+		originalText, exists := store.Get(
+			edited.BusinessConnectionID,
+			edited.Chat.ID,
+			edited.ID,
 		)
+
+		var notification string
+		if exists && originalText != "" {
+			if originalText == edited.Text {
+				// Текст не изменился
+				notification = fmt.Sprintf(
+					"✏️ <b>%s</b> | %s\n"+
+						"━━━━━━━━━━━━━━━\n"+
+						"<i>Сообщение отредактировано (текст не изменился)</i>",
+					userName,
+					chatTitle,
+				)
+			} else {
+				// Показываем diff с подсветкой
+				diffHTML := generatePrettyDiff(originalText, edited.Text)
+
+				notification = fmt.Sprintf(
+					"✏️ <b>%s</b> | %s\n"+
+						"━━━━━━━━━━━━━━━\n"+
+						"%s",
+					userName,
+					chatTitle,
+					diffHTML,
+				)
+			}
+		} else {
+			// Оригинал не найден
+			notification = fmt.Sprintf(
+				"✏️ <b>%s</b> | %s\n"+
+					"━━━━━━━━━━━━━━━\n"+
+					"%s",
+				userName,
+				chatTitle,
+				escapeHTML(edited.Text),
+			)
+		}
 
 		sendNotification(ctx, b, yourUserID, notification)
 		store.Save(edited.BusinessConnectionID, edited.Chat.ID, edited.ID, edited.Text)
