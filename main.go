@@ -47,6 +47,20 @@ func main() {
 }
 
 func handleUpdate(ctx context.Context, b *bot.Bot, update *models.Update, yourUserID int64) {
+	if update.Message != nil && update.Message.Text != "" {
+		if update.Message.Text == "/test" && update.Message.From != nil {
+			if update.Message.From.ID != yourUserID {
+				return
+			}
+
+			_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID: yourUserID,
+				Text:   "✅ Bot is working",
+			})
+			return
+		}
+	}
+
 	if update.EditedBusinessMessage != nil {
 		edited := update.EditedBusinessMessage
 
