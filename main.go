@@ -43,29 +43,13 @@ func main() {
 		log.Fatal("Ошибка создания бота:", err)
 	}
 
-	log.Printf("✅ Бот запущен: @%s", b.Token())
-	log.Println("📋 Бот работает в режиме Business. Подключите его к своему бизнес-аккаунту через настройки Telegram.")
-
 	b.Start(ctx)
 }
 
 func handleUpdate(ctx context.Context, b *bot.Bot, update *models.Update, yourUserID int64) {
-	// Обрабатываем подключение/отключение бизнес-аккаунта
-	if update.BusinessConnection != nil {
-		conn := update.BusinessConnection
-		if conn.IsEnabled {
-			log.Printf("✅ Бизнес-подключение активировано: %s (User ID: %d)",
-				conn.ID, conn.User.ID)
-		} else {
-			log.Printf("❌ Бизнес-подключение деактивировано: %s", conn.ID)
-		}
-		return
-	}
-
-	// Обрабатываем отредактированные бизнес-сообщения
 	if update.EditedBusinessMessage != nil {
 		edited := update.EditedBusinessMessage
-		// Пропускаем свои сообщения
+
 		if edited.From != nil && edited.From.ID == yourUserID {
 			return
 		}
@@ -83,11 +67,9 @@ func handleUpdate(ctx context.Context, b *bot.Bot, update *models.Update, yourUs
 		)
 
 		sendNotification(ctx, b, yourUserID, notification)
-		log.Printf("✏️ Отредактировано в чате %d: %s", edited.Chat.ID, userName)
 		return
 	}
 
-	// Обрабатываем удалённые бизнес-сообщения
 	if update.DeletedBusinessMessages != nil {
 		deleted := update.DeletedBusinessMessages
 		chatTitle := getChatTitle(deleted.Chat)
@@ -101,7 +83,6 @@ func handleUpdate(ctx context.Context, b *bot.Bot, update *models.Update, yourUs
 		)
 
 		sendNotification(ctx, b, yourUserID, notification)
-		log.Printf("🗑 Удалено %d сообщений в чате %d", len(deleted.MessageIDs), deleted.Chat.ID)
 		return
 	}
 }
@@ -145,12 +126,9 @@ func escapeHTML(text string) string {
 }
 
 func sendNotification(ctx context.Context, b *bot.Bot, userID int64, text string) {
-	_, err := b.SendMessage(ctx, &bot.SendMessageParams{
+	_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID:    userID,
 		Text:      text,
 		ParseMode: models.ParseModeHTML,
 	})
-	if err != nil {
-		log.Printf("❌ Ошибка отправки уведомления: %v", err)
-	}
 }
