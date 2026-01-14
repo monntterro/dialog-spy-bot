@@ -1,4 +1,4 @@
-module dialog-spy-bot
+module spy-bot
 
 go 1.25
 
