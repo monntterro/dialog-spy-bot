@@ -103,26 +103,21 @@ func handleUpdate(ctx context.Context, b *bot.Bot, update *models.Update, store 
 		for _, messageID := range deleted.MessageIDs {
 			originalText, exists := store.Get(bizConnID, chatID, messageID)
 
-			var notification string
-			if exists && originalText != "" {
-				notification = fmt.Sprintf(
+			if !exists {
+				continue
+			}
+
+			if originalText != "" {
+				var notification = fmt.Sprintf(
 					"🗑 <b>%s</b>\n"+
 						"━━━━━━━━━━━━━━━\n"+
 						"%s",
 					chatTitle,
 					escapeHTML(originalText),
 				)
-			} else {
-				notification = fmt.Sprintf(
-					"🗑 <b>%s</b>\n"+
-						"━━━━━━━━━━━━━━━\n"+
-						"<i>Сообщение удалено (текст не сохранён)</i>",
-					chatTitle,
-				)
+				sendNotification(ctx, b, yourUserID, notification)
+				store.Delete(bizConnID, chatID, messageID)
 			}
-
-			sendNotification(ctx, b, yourUserID, notification)
-			store.Delete(bizConnID, chatID, messageID)
 		}
 	}
 }
